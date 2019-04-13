@@ -16,7 +16,8 @@
     "react-native-cli": "^2.0.1"
   },
   "devDependencies": {
-    "babel-preset-expo": "^5.0.0"
+    "babel-preset-expo": "^5.0.0",
+    "eslint": "^5.16.0"
   },
   "private": true
 }
