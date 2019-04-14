@@ -2,6 +2,7 @@
 import React, { Component } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { BleManager } from "react-native-ble-plx";
+import DeviceList from "./components/DeviceList";
 
 const instructions = Platform.select({
   ios: "Press Cmd+R to reload,\n" + "Cmd+D or shake for dev menu",
@@ -10,30 +11,41 @@ const instructions = Platform.select({
     "Shake or press menu button for dev menu"
 });
 
+type AppState = "FINDING_DEVICES" | "CONNECTING_TO_DEVICE" | "RUNNING";
+
 type Props = {};
 
 type State = {
   messages: string[],
-  devices: { [string]: boolean }
+  devices: { [string]: * },
+  state: AppState
 };
+
+const maxLogLines = 5;
+const expectedDeviceName = "E2MMyowareDeviceHR";
 
 export default class App extends Component<Props, State> {
   bleManager: *;
 
   state = {
     messages: [],
-    devices: {}
+    devices: {},
+    state: "FINDING_DEVICES"
   };
 
   logMessage = (msg: string) => {
-    this.setState(prevState => ({
-      messages: [msg, ...prevState.messages]
-    }));
+    this.setState(prevState => {
+      const nextMessages = [msg, ...prevState.messages];
+      if (nextMessages.length > maxLogLines) {
+        nextMessages.pop();
+      }
+      return { messages: nextMessages };
+    });
   };
 
-  addDevice = (name: string) => {
+  addDevice = (dev: *) => {
     this.setState(prevState => ({
-      devices: { ...prevState.devices, [name]: true }
+      devices: { ...prevState.devices, [dev.name]: dev }
     }));
   };
 
@@ -50,10 +62,9 @@ export default class App extends Component<Props, State> {
               this.logMessage(error);
               return;
             }
-            if (device.name != null) {
-              Array.from(Object.keys(device)).forEach(k => this.addDevice(k));
-              this.addDevice(device.name);
-              this.addDevice(device.id);
+            if (device.name === expectedDeviceName) {
+              this.setState({ state: "CONNECTING_TO_DEVICE" });
+              this.addDevice(device);
             }
           }
         );
@@ -62,16 +73,13 @@ export default class App extends Component<Props, State> {
   }
 
   render() {
+    const devices = Array.from(Object.values(this.state.devices));
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to xyzReact Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+        <Text style={styles.welcome}>E2M Myoware Control Panel</Text>
+        <DeviceList devices={devices} />
         <Text style={styles.instructions}>
           {this.state.messages.join("\n")}
-        </Text>
-        <Text style={styles.instructions}>
-          {Array.from(Object.keys(this.state.devices)).join("\n")}
         </Text>
       </View>
     );
